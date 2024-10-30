@@ -1,0 +1,15 @@
+.{
+    .name = "otimorm",
+    .version = "0.8.0",
+    .dependencies = .{
+        .pg = .{
+            .url = "git+https://github.com/karlseguin/pg.zig?ref=master#adc728df1f19d4ef67d009b80f4cf53aae2bcbd1",
+            .hash = "1220914ac9634b448c910064b2097e7f856e0729a21d78194da8ebfc3cf676723b56",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
