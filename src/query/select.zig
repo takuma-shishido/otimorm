@@ -20,13 +20,10 @@ pub fn Select(comptime M: type) type {
         @compileError("M must have Table declaration");
     }
 
-    const result_type: type = if (is_array) []model_type else model_type;
-
     return struct {
         const Self = @This();
 
         pub const Model = model_type;
-        pub const Result = result_type;
 
         pub const PossibleError = error{None};
 
@@ -107,8 +104,8 @@ pub fn Select(comptime M: type) type {
             const query_result = try self.db.exec(output);
             defer query_result.deinit();
 
-            const send_type = if (is_array) std.ArrayList(Model) else result_type;
-            var result: send_type = undefined;
+            const send_type = if (is_array) std.ArrayList(Model) else ?Model;
+            var result: send_type = null;
             if (is_array) {
                 result = send_type.init(allocator);
             }
@@ -116,9 +113,9 @@ pub fn Select(comptime M: type) type {
             var query_res = try query_result.res.next();
             while (query_res) |row| {
                 if (is_array) {
-                    try result.append(try row.to(model_type, .{ .map = .name }));
+                    try result.append(try row.to(Model, .{ .map = .name }));
                 } else {
-                    result = try row.to(model_type, .{ .map = .name });
+                    result = try row.to(Model, .{ .map = .name });
                 }
 
                 query_res = try query_result.res.next();
