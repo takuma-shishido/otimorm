@@ -7,6 +7,9 @@
 
 tested with `0.14.0-dev`
 
+## Code Example
+see [this](https://github.com/takuma-shishido/otimorm/blob/develop/example/main.zig).
+
 ## TODO
 
 - Support for more complex queries
