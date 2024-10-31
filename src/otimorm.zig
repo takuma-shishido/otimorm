@@ -66,7 +66,7 @@ pub const Database = struct {
             _ = conn.exec(item, .{}) catch |err| {
                 if (err == error.PG) {
                     if (conn.err) |pge| {
-                        std.log.err("pg error: {s}\n", .{pge.message});
+                        std.log.err("prepare query error: {s}\n", .{pge.message});
                     }
                 }
                 return err;
@@ -76,7 +76,7 @@ pub const Database = struct {
         const result = conn.queryOpts(query, .{}, .{ .column_names = true, .release_conn = true }) catch |err| {
             if (err == error.PG) {
                 if (conn.err) |pge| {
-                    std.log.err("pg error: {s}\n", .{pge.message});
+                    std.log.err("query error: {s}\n", .{pge.message});
                 }
             }
             return err;
