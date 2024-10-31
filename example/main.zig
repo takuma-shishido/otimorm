@@ -63,7 +63,7 @@ pub fn main() !void {
 
         //If multiple values are found, you can specify whether to return the first value found or the last value found.
         //For arrays, this option does nothing
-        select.result_filter = .First;
+        select.result_selection = .First;
 
         if (try select.send()) |model| {
             std.log.info("result.test_value: {s}", .{model.test_value});
