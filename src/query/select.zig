@@ -53,6 +53,8 @@ pub fn Select(comptime M: type) type {
         }
 
         pub fn send(self: *Self) !?M {
+            defer self.deinit();
+
             const allocator = self.arena.allocator();
 
             var string_builder = std.ArrayList(u8).init(allocator);
