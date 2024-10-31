@@ -105,7 +105,9 @@ pub fn Select(comptime M: type) type {
             defer query_result.deinit();
 
             const send_type = if (is_array) std.ArrayList(Model) else ?Model;
-            var result: send_type = null;
+
+            //ArrayList is always initialized in the code below, so it will never be null, but otherwise it may be null because
+            var result: send_type = if (is_array) undefined else null;
             if (is_array) {
                 result = send_type.init(allocator);
             }
