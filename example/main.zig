@@ -126,6 +126,41 @@ pub fn main() !void {
         }
     }
 
-    //TODO: update, delete, deleteAll
+    {
+        std.log.info("Example 5 (update)", .{});
 
+        //Note that what is passed here is not a condition like where, but an updated value.
+        //Difficult to update only certain values.
+        //Can be implemented by making everything optional and using null, but not a good approach.
+        var update = db.update(User, .{ .test_value = "hoo", .test_num = null, .test_bool = true });
+
+        try update.where(.{ .test_value = "foo", .test_num = null, .test_bool = false });
+
+        update.send() catch |err| {
+            std.log.err("{any}", .{err});
+        };
+    }
+
+    {
+        std.log.info("Example 6 (delete)", .{});
+
+        //delete does the same thing here without the where function
+        var delete = db.delete(User, .{ .test_value = "hoo", .test_num = null, .test_bool = true });
+
+        delete.send() catch |err| {
+            std.log.err("{any}", .{err});
+        };
+    }
+
+    {
+        std.log.info("Example 7 (deleteAll)", .{});
+
+        //Only Model is needed for deleteAll
+        //be careful when using it, as it deletes all the values in Model.Table without conditions.
+        var deleteAll = db.deleteAll(User);
+
+        deleteAll.send() catch |err| {
+            std.log.err("{any}", .{err});
+        };
+    }
 }

@@ -9,7 +9,6 @@ tested with `0.14.0-dev`
 
 ## TODO
 
-- Code Example
 - Support for more complex queries
 
 ## Credit
