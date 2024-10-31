@@ -24,12 +24,16 @@ pub fn Select(comptime M: type) type {
         const Self = @This();
 
         pub const Model = model_type;
-
         pub const PossibleError = error{None};
+        const ResultFilter = enum {
+            First,
+            Last,
+        };
 
         arena: std.heap.ArenaAllocator,
         db: *Database,
         orm_argument_where: OrmArgument,
+        result_filter: ResultFilter = .First,
 
         pub fn init(allocator: std.mem.Allocator, db: *Database) Self {
             return Self{
@@ -117,7 +121,16 @@ pub fn Select(comptime M: type) type {
                 if (is_array) {
                     try result.append(try row.to(Model, .{ .map = .name }));
                 } else {
-                    result = try row.to(Model, .{ .map = .name });
+                    switch (self.result_filter) {
+                        .First => {
+                            if (result == null) {
+                                result = try row.to(Model, .{ .map = .name });
+                            }
+                        },
+                        .Last => {
+                            result = try row.to(Model, .{ .map = .name });
+                        },
+                    }
                 }
 
                 query_res = try query_result.res.next();
