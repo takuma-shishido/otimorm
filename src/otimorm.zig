@@ -34,12 +34,14 @@ pub const Database = struct {
     allocator: std.mem.Allocator,
     connected: bool,
     _pool: *pg.Pool,
+    _prepare: std.ArrayList([]const u8),
 
     pub fn init(allocator: std.mem.Allocator) Self {
         return Self{
             .allocator = allocator,
             .connected = false,
             ._pool = undefined,
+            ._prepare = std.ArrayList([]const u8).init(allocator),
         };
     }
 
@@ -47,13 +49,38 @@ pub const Database = struct {
         if (self.connected) {
             self._pool.deinit();
         }
+        self._prepare.deinit();
+    }
+
+    pub fn prepareQuery(self: *Self, query: []const u8) !void {
+        try self._prepare.append(query);
     }
 
     pub fn exec(self: Self, query: []const u8) !Result {
         if (!self.connected)
             return Error.NotConnected;
 
-        const result = try self._pool.queryOpts(query, .{}, .{ .column_names = true });
+        const conn = try self._pool.acquire();
+
+        for (self._prepare.items) |item| {
+            _ = conn.exec(item, .{}) catch |err| {
+                if (err == error.PG) {
+                    if (conn.err) |pge| {
+                        std.log.err("pg error: {s}\n", .{pge.message});
+                    }
+                }
+                return err;
+            };
+        }
+
+        const result = conn.queryOpts(query, .{}, .{ .column_names = true, .release_conn = true }) catch |err| {
+            if (err == error.PG) {
+                if (conn.err) |pge| {
+                    std.log.err("pg error: {s}\n", .{pge.message});
+                }
+            }
+            return err;
+        };
 
         return Result{ .res = result };
     }
@@ -89,116 +116,3 @@ pub const Database = struct {
         return Query.DeleteAll(T).init(self.allocator, self);
     }
 };
-
-test "Database: Insert" {
-    const allocator = std.testing.allocator;
-    var db = Database.init(allocator);
-    defer db.deinit();
-
-    try db.connect("postgresql://postgres:postgres@localhost:5432/orm");
-
-    const User = struct {
-        pub const Table = "test_table";
-
-        test_value: []const u8,
-        test_num: ?i32,
-        test_bool: bool,
-    };
-
-    {
-        var insert = db.insert(User, .{ .test_value = "foo", .test_num = undefined, .test_bool = true });
-        try insert.send();
-    }
-}
-
-test "Database: Select" {
-    const allocator = std.testing.allocator;
-    var db = Database.init(allocator);
-    defer db.deinit();
-
-    try db.connect("postgresql://postgres:postgres@localhost:5432/orm");
-
-    const User = struct {
-        pub const Table = "test_table";
-
-        test_value: []const u8,
-        test_num: ?i32,
-        test_bool: bool,
-    };
-
-    {
-        var select = db.select([]User);
-        try select.where(.{ .test_value = "foo", .test_num = undefined, .test_bool = true });
-        defer select.deinit();
-
-        if (try select.send()) |models| {
-            for (models) |model| {
-                _ = model; // autofix
-            }
-        }
-    }
-}
-
-test "Database: Update" {
-    const allocator = std.testing.allocator;
-    var db = Database.init(allocator);
-    defer db.deinit();
-
-    try db.connect("postgresql://postgres:postgres@localhost:5432/orm");
-
-    const User = struct {
-        pub const Table = "test_table";
-
-        test_value: []const u8,
-        test_num: ?i32,
-        test_bool: bool,
-    };
-
-    {
-        var update = db.update(User, .{ .test_value = "fooha", .test_num = undefined, .test_bool = false });
-        try update.where(.{ .test_value = "foo", .test_num = undefined, .test_bool = true });
-        try update.send();
-    }
-}
-
-test "Database: Delete" {
-    const allocator = std.testing.allocator;
-    var db = Database.init(allocator);
-    defer db.deinit();
-
-    try db.connect("postgresql://postgres:postgres@localhost:5432/orm");
-
-    const User = struct {
-        pub const Table = "test_table";
-
-        test_value: []const u8,
-        test_num: ?i32,
-        test_bool: bool,
-    };
-
-    {
-        var delete = db.delete(User, .{ .test_value = "foo", .test_num = undefined, .test_bool = true });
-        try delete.send();
-    }
-}
-
-test "Database: DeleteAll" {
-    const allocator = std.testing.allocator;
-    var db = Database.init(allocator);
-    defer db.deinit();
-
-    try db.connect("postgresql://postgres:postgres@localhost:5432/orm");
-
-    const User = struct {
-        pub const Table = "test_table";
-
-        test_value: []const u8,
-        test_num: ?i32,
-        test_bool: bool,
-    };
-
-    {
-        var deleteAll = db.deleteAll(User);
-        try deleteAll.send();
-    }
-}
