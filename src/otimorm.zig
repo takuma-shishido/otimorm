@@ -2,6 +2,7 @@ const std = @import("std");
 
 const pg = @import("pg");
 const utils = @import("utils.zig");
+const Partial = @import("utils.zig").Partial;
 const Query = @import("query/lib.zig");
 
 pub const Database = struct {
@@ -100,15 +101,15 @@ pub const Database = struct {
         return Query.Select(T).init(self.allocator, self);
     }
 
-    pub fn insert(self: *Self, comptime T: type, value: T) Query.Insert(T) {
+    pub fn insert(self: *Self, comptime T: type, value: Partial(T)) Query.Insert(T) {
         return Query.Insert(T).init(self.allocator, self, value);
     }
 
-    pub fn update(self: *Self, comptime T: type, value: T) Query.Update(T) {
+    pub fn update(self: *Self, comptime T: type, value: Partial(T)) Query.Update(T) {
         return Query.Update(T).init(self.allocator, self, value);
     }
 
-    pub fn delete(self: *Self, comptime T: type, value: T) Query.Delete(T) {
+    pub fn delete(self: *Self, comptime T: type, value: Partial(T)) Query.Delete(T) {
         return Query.Delete(T).init(self.allocator, self, value);
     }
 

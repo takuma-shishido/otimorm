@@ -2,19 +2,18 @@ const std = @import("std");
 
 const Database = @import("../otimorm.zig").Database;
 
-pub fn DeleteAll(comptime M: type) type {
-    if (@typeInfo(M) != .@"struct") {
+pub fn DeleteAll(comptime Model: type) type {
+    if (@typeInfo(Model) != .@"struct") {
         @compileError("M must be a struct");
     }
 
-    if (!@hasDecl(M, "Table")) {
+    if (!@hasDecl(Model, "Table")) {
         @compileError("M must have Table declaration");
     }
 
     return struct {
         const Self = @This();
 
-        pub const Model = M;
         pub const PossibleError = error{None};
 
         arena: std.heap.ArenaAllocator,

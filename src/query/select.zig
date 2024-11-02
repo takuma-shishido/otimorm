@@ -1,11 +1,13 @@
 const std = @import("std");
 
 const Database = @import("../otimorm.zig").Database;
+const Partial = @import("../utils.zig").Partial;
+
 const OrmArgument = @import("lib.zig").OrmArgument;
 
-pub fn Select(comptime M: type) type {
-    const MInfo = @typeInfo(M);
-    comptime var model_type: type = M;
+pub fn Select(comptime Model: type) type {
+    const MInfo = @typeInfo(Model);
+    comptime var model_type: type = Model;
     comptime var is_array = false;
     if (MInfo == .pointer and MInfo.pointer.size == .Slice) {
         model_type = MInfo.pointer.child;
@@ -23,7 +25,6 @@ pub fn Select(comptime M: type) type {
     return struct {
         const Self = @This();
 
-        pub const Model = model_type;
         pub const PossibleError = error{None};
         const ResultSelection = enum {
             First,
@@ -48,12 +49,12 @@ pub fn Select(comptime M: type) type {
             self.arena.deinit();
         }
 
-        pub fn where(self: *Self, value: model_type) !void {
+        pub fn where(self: *Self, value: Partial(model_type)) !void {
             const allocator = self.arena.allocator();
             try self.orm_argument_where.parseArguments(allocator, value);
         }
 
-        pub fn send(self: *Self) !?M {
+        pub fn send(self: *Self) !?Model {
             const allocator = self.arena.allocator();
 
             var string_builder = std.ArrayList(u8).init(allocator);
@@ -108,7 +109,7 @@ pub fn Select(comptime M: type) type {
             const query_result = try self.db.exec(output);
             defer query_result.deinit();
 
-            const send_type = if (is_array) std.ArrayList(Model) else ?Model;
+            const send_type = if (is_array) std.ArrayList(model_type) else ?model_type;
 
             //ArrayList is always initialized in the code below, so it will never be null, but otherwise it may be null because
             var result: send_type = if (is_array) undefined else null;
@@ -119,16 +120,16 @@ pub fn Select(comptime M: type) type {
             var query_res = try query_result.res.next();
             while (query_res) |row| {
                 if (is_array) {
-                    try result.append(try row.to(Model, .{ .map = .name }));
+                    try result.append(try row.to(model_type, .{ .map = .name }));
                 } else {
                     switch (self.result_selection) {
                         .First => {
                             if (result == null) {
-                                result = try row.to(Model, .{ .map = .name });
+                                result = try row.to(model_type, .{ .map = .name });
                             }
                         },
                         .Last => {
-                            result = try row.to(Model, .{ .map = .name });
+                            result = try row.to(model_type, .{ .map = .name });
                         },
                     }
                 }

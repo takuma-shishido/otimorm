@@ -1,30 +1,31 @@
 const std = @import("std");
 
 const Database = @import("../otimorm.zig").Database;
+const Partial = @import("../utils.zig").Partial;
+
 const OrmArgument = @import("lib.zig").OrmArgument;
 
-pub fn Update(comptime M: type) type {
-    if (@typeInfo(M) != .@"struct") {
+pub fn Update(comptime Model: type) type {
+    if (@typeInfo(Model) != .@"struct") {
         @compileError("M must be a struct");
     }
 
-    if (!@hasDecl(M, "Table")) {
+    if (!@hasDecl(Model, "Table")) {
         @compileError("M must have Table declaration");
     }
 
     return struct {
         const Self = @This();
 
-        pub const Model = M;
         pub const PossibleError = error{None};
 
         arena: std.heap.ArenaAllocator,
         db: *Database,
         orm_argument: OrmArgument,
         orm_argument_where: OrmArgument,
-        value: M,
+        value: Partial(Model),
 
-        pub fn init(allocator: std.mem.Allocator, db: *Database, value: M) Self {
+        pub fn init(allocator: std.mem.Allocator, db: *Database, value: Partial(Model)) Self {
             return Self{
                 .arena = std.heap.ArenaAllocator.init(allocator),
                 .db = db,
@@ -40,7 +41,7 @@ pub fn Update(comptime M: type) type {
             self.arena.deinit();
         }
 
-        pub fn where(self: *Self, value: M) !void {
+        pub fn where(self: *Self, value: Partial(Model)) !void {
             const allocator = self.arena.allocator();
             try self.orm_argument_where.parseArguments(allocator, value);
         }
