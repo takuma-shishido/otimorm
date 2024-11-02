@@ -1,6 +1,6 @@
 .{
     .name = "otimorm",
-    .version = "0.8.0",
+    .version = "0.9.0",
     .dependencies = .{
         .pg = .{
             .url = "git+https://github.com/karlseguin/pg.zig?ref=master#adc728df1f19d4ef67d009b80f4cf53aae2bcbd1",
