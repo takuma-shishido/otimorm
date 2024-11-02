@@ -10,7 +10,14 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    exe.root_module.addImport("otimorm", b.dependency("otimorm", .{}).module("otimorm"));
+
+    const otimorm = b.dependency("otimorm", .{
+        .target = target,
+        .optimize = optimize,
+        .debug_log = true,
+    });
+
+    exe.root_module.addImport("otimorm", otimorm.module("otimorm"));
 
     b.installArtifact(exe);
 

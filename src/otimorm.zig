@@ -1,9 +1,12 @@
 const std = @import("std");
+const build_options = @import("build_options");
 
 const pg = @import("pg");
 const utils = @import("utils.zig");
 const Partial = @import("utils.zig").Partial;
 const Query = @import("query/lib.zig");
+
+const log = std.log.scoped(.otimorm);
 
 pub const Database = struct {
     const Self = @This();
@@ -60,6 +63,8 @@ pub const Database = struct {
     pub fn exec(self: Self, query: []const u8) !Result {
         if (!self.connected)
             return Error.NotConnected;
+
+        if (build_options.debug_log) log.debug("exec: {s}", .{query});
 
         const conn = try self._pool.acquire();
 
