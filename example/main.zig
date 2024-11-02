@@ -130,6 +130,12 @@ pub fn main() !void {
         //Note that what is passed here is not a condition like where, but an updated value.
         var update = db.update(User, .{ .test_value = "hoo", .test_bool = true });
 
+        //Can be included in a query without skipping null
+        update.orm_argument.allow_null = true;
+
+        //Remember that these must be set before using the where function
+        update.orm_argument_where.allow_null = true;
+
         try update.where(.{ .test_value = "foo", .test_bool = false });
 
         update.send() catch |err| {

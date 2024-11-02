@@ -19,12 +19,13 @@ pub const OrmArgument = struct {
     };
 
     arguments: ?std.hash_map.StringHashMap(Argument),
-    container: ?std.ArrayList(u8),
+
+    /// If this field is set to true, null fields will not be skipped.
+    allow_null: bool = false,
 
     pub fn init() Self {
         return Self{
             .arguments = undefined,
-            .container = undefined,
         };
     }
 
@@ -32,15 +33,10 @@ pub const OrmArgument = struct {
         if (self.arguments) |_| {
             self.arguments.?.deinit();
         }
-
-        if (self.container) |_| {
-            self.container.?.deinit();
-        }
     }
 
     pub fn parseArguments(self: *Self, allocator: std.mem.Allocator, args: anytype) !void {
         self.arguments = std.hash_map.StringHashMap(Argument).init(allocator);
-        self.container = std.ArrayList(u8).init(allocator);
 
         const ArgsInfo = @typeInfo(@TypeOf(args));
         if (ArgsInfo != .@"struct")
@@ -57,6 +53,10 @@ pub const OrmArgument = struct {
                     if (self.arguments) |*arguments| {
                         _ = try arguments.put(field.name, Argument{ .Other = try std.fmt.allocPrint(allocator, "{any}", .{value}) });
                     }
+                }
+            } else if (self.allow_null) {
+                if (self.arguments) |*arguments| {
+                    _ = try arguments.put(field.name, Argument{ .Other = "null" });
                 }
             }
         }
