@@ -56,9 +56,12 @@ pub fn Update(comptime M: type) type {
 
             var writer = string_builder.writer();
 
-            try writer.print("update {s} set (", .{Model.Table});
+            try writer.print("update {s} set ", .{Model.Table});
 
             if (self.orm_argument.arguments) |arguments| {
+                if (arguments.count() > 1) {
+                    try writer.writeAll("(");
+                }
 
                 // column names
                 {
@@ -72,7 +75,11 @@ pub fn Update(comptime M: type) type {
                     }
                 }
 
-                try writer.writeAll(") = (");
+                if (arguments.count() > 1) {
+                    try writer.writeAll(") = (");
+                } else {
+                    try writer.writeAll(" = ");
+                }
 
                 // values
                 {
@@ -93,7 +100,9 @@ pub fn Update(comptime M: type) type {
                     }
                 }
 
-                try writer.writeAll(")");
+                if (arguments.count() > 1) {
+                    try writer.writeAll(")");
+                }
             }
 
             if (self.orm_argument_where.arguments) |arguments| {
