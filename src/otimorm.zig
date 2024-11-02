@@ -64,7 +64,7 @@ pub const Database = struct {
         if (!self.connected)
             return Error.NotConnected;
 
-        if (build_options.debug_log) log.debug("exec: {s}", .{query});
+        if (build_options.debug_log) log.debug("exec `{s}`", .{query});
 
         const conn = try self._pool.acquire();
 
