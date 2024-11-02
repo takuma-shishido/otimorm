@@ -47,11 +47,11 @@ pub fn isNull(value: anytype) bool {
 /// Set everything to Optional by default and assign by default
 /// Objects using this type do not need to be initialized with null
 pub fn Partial(comptime T: type) type {
-    if (!@hasDecl(T, .@"struct")) {
+    const info = @typeInfo(T);
+    if (info != .@"struct") {
         @compileError("Cannot make Partial of " ++ @typeName(T) ++ ", it is not a struct");
     }
 
-    const info = @typeInfo(T);
     comptime var fields: []const std.builtin.Type.StructField = &[_]std.builtin.Type.StructField{};
     inline for (info.@"struct".fields) |field| {
         const optional_type = switch (@typeInfo(field.type)) {
